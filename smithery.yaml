@@ -1,0 +1,30 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - rapidApiKey
+    properties:
+      rapidApiKey:
+        type: string
+        description: Your RapidAPI key for DetectZeStack API access. Get one at https://rapidapi.com/detectzestack/api/detectzestack
+      apiMarketKey:
+        type: string
+        description: Alternative API key from API.market (optional, use instead of RapidAPI key)
+      directApiKey:
+        type: string
+        description: Direct DetectZeStack API key (optional, use instead of RapidAPI key)
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'detectzestack-mcp'],
+      env: {
+        ...(config.rapidApiKey ? { RAPIDAPI_KEY: config.rapidApiKey } : {}),
+        ...(config.apiMarketKey ? { APIMARKET_KEY: config.apiMarketKey } : {}),
+        ...(config.directApiKey ? { DETECTZESTACK_API_KEY: config.directApiKey } : {})
+      }
+    })
+  exampleConfig:
+    rapidApiKey: "your-rapidapi-key-here"
