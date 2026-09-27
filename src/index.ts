@@ -4,47 +4,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-// --- Multi-Marketplace Auth ---
-
-interface ProviderConfig {
-  baseUrl: string;
-  headers: Record<string, string>;
-  name: string;
-}
-
-function resolveProvider(): ProviderConfig {
-  // Priority: RAPIDAPI_KEY > APIMARKET_KEY > DETECTZESTACK_API_KEY
-  if (process.env.RAPIDAPI_KEY) {
-    return {
-      baseUrl: "https://detectzestack.p.rapidapi.com",
-      headers: {
-        "X-RapidAPI-Key": process.env.RAPIDAPI_KEY,
-        "X-RapidAPI-Host": "detectzestack.p.rapidapi.com",
-      },
-      name: "RapidAPI",
-    };
-  }
-  if (process.env.APIMARKET_KEY) {
-    return {
-      baseUrl: "https://prod.api.market/api/v1/detectzestack/techstack",
-      headers: {
-        "x-api-market-key": process.env.APIMARKET_KEY,
-      },
-      name: "API.market",
-    };
-  }
-  if (process.env.DETECTZESTACK_API_KEY) {
-    return {
-      baseUrl: "https://detectzestack.com",
-      headers: {
-        "X-API-Key": process.env.DETECTZESTACK_API_KEY,
-      },
-      name: "Direct",
-    };
-  }
-  // Should never reach here — caught by startup validation
-  throw new Error("No API key configured");
-}
+import {
+  resolveProvider,
+  buildHeaders,
+  handleError as formatError,
+  ApiError,
+  missingKeyMessage,
+  VERSION,
+} from "./lib.js";
 
 // --- Startup Validation ---
 
@@ -53,18 +20,11 @@ if (
   !process.env.APIMARKET_KEY &&
   !process.env.DETECTZESTACK_API_KEY
 ) {
-  console.error(
-    "ERROR: No API key found. Set one of these environment variables:\n\n" +
-      "  RAPIDAPI_KEY          — Get at https://rapidapi.com/detectzestack/api/detectzestack\n" +
-      "  APIMARKET_KEY         — Get at https://api.market/store/detectzestack\n" +
-      "  DETECTZESTACK_API_KEY — Get at https://detectzestack.com\n\n" +
-      "Set it in your MCP config:\n" +
-      '  "env": { "RAPIDAPI_KEY": "your-key-here" }'
-  );
+  console.error(missingKeyMessage());
   process.exit(1);
 }
 
-const provider = resolveProvider();
+const provider = resolveProvider(process.env);
 console.error(
   `DetectZeStack MCP server starting (provider: ${provider.name})`
 );
@@ -90,14 +50,7 @@ async function apiRequest(
     : "";
   const url = provider.baseUrl + path + queryString;
 
-  const headers: Record<string, string> = {
-    ...provider.headers,
-    Accept: "application/json",
-  };
-
-  if (body) {
-    headers["Content-Type"] = "application/json";
-  }
+  const headers = buildHeaders(provider, Boolean(body));
 
   const response = await fetch(url, {
     method,
@@ -108,11 +61,15 @@ async function apiRequest(
   const data = await response.json();
 
   if (!response.ok) {
-    const errorMsg = (data as Record<string, unknown>)?.error;
-    throw new Error(
+    const d = data as Record<string, unknown>;
+    const errorMsg = d?.error;
+    const upgrade = typeof d?.upgrade_url === "string" ? d.upgrade_url : typeof d?.upgrade === "string" ? d.upgrade : undefined;
+    throw new ApiError(
       typeof errorMsg === "string"
         ? errorMsg
-        : `API request failed with status ${response.status}`
+        : `API request failed with status ${response.status}`,
+      response.status,
+      upgrade
     );
   }
 
@@ -122,35 +79,14 @@ async function apiRequest(
 // --- Error Handler ---
 
 function handleError(error: unknown): string {
-  if (error instanceof Error) {
-    const msg = error.message;
-
-    // Rate limit
-    if (msg.includes("rate limit") || msg.includes("429")) {
-      return "Rate limit exceeded. Your plan's monthly request quota has been reached. Upgrade at https://rapidapi.com/detectzestack/api/detectzestack/pricing";
-    }
-
-    // Auth
-    if (msg.includes("unauthorized") || msg.includes("401")) {
-      return "Authentication failed. Check that your API key environment variable is set correctly.\n\nSupported providers:\n  RAPIDAPI_KEY          — https://rapidapi.com/detectzestack/api/detectzestack\n  APIMARKET_KEY         — https://api.market/store/detectzestack\n  DETECTZESTACK_API_KEY — https://detectzestack.com";
-    }
-
-    // Tier gate
-    if (msg.includes("tier") || msg.includes("403")) {
-      return `Access denied: ${msg}. This endpoint may require a higher plan tier. See https://rapidapi.com/detectzestack/api/detectzestack/pricing`;
-    }
-
-    return `Error: ${msg}`;
-  }
-
-  return `Unexpected error: ${String(error)}`;
+  return formatError(error, provider);
 }
 
 // --- Server Initialization ---
 
 const server = new McpServer({
   name: "detectzestack-mcp",
-  version: "1.0.0",
+  version: VERSION,
 });
 
 // --- Tool 1: detect_tech_stack ---

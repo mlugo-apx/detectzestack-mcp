@@ -62,9 +62,9 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ### Get Your API Key
 
-1. Go to [DetectZeStack on RapidAPI](https://rapidapi.com/detectzestack/api/detectzestack)
-2. Subscribe to a plan (free tier: 100 requests/month)
-3. Copy your API key from the RapidAPI dashboard
+Either:
+- **Direct:** sign up at [detectzestack.com/signup](https://detectzestack.com/signup) (free tier: 100 requests/month) and set `DETECTZESTACK_API_KEY`, or
+- **RapidAPI:** subscribe at [DetectZeStack on RapidAPI](https://rapidapi.com/mlugoapx/api/detectzestack) and set `RAPIDAPI_KEY`.
 
 ### Alternative API Providers
 
@@ -138,13 +138,13 @@ Once configured, ask your AI agent:
 | Ultra | 10,000 | $29/mo |
 | Mega | 50,000 | $79/mo |
 
-[View pricing](https://rapidapi.com/detectzestack/api/detectzestack/pricing)
+[View pricing](https://detectzestack.com/pricing) (same plans on [RapidAPI](https://rapidapi.com/mlugoapx/api/detectzestack/pricing))
 
 ## Links
 
 - [DetectZeStack Website](https://detectzestack.com)
 - [API Documentation](https://detectzestack.com/openapi.yaml)
-- [RapidAPI Listing](https://rapidapi.com/detectzestack/api/detectzestack)
+- [RapidAPI Listing](https://rapidapi.com/mlugoapx/api/detectzestack)
 - [Report Issues](https://github.com/mlugo-apx/detectzestack-mcp/issues)
 
 ## License
