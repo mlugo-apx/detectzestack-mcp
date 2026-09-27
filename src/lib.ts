@@ -1,7 +1,7 @@
 // Testable core of the DetectZeStack MCP server (extracted in 1.1.0).
 // Tests: test/lib.test.ts
 
-export const VERSION = "1.1.0";
+export const VERSION = "1.1.1";
 export const USER_AGENT = `detectzestack-mcp/${VERSION}`;
 
 export interface ProviderConfig {

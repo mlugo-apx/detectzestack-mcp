@@ -1,0 +1,43 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mlugo-apx/detectzestack-mcp",
+  "description": "Detect any website's tech stack, security headers, SSL, DNS and CVEs via DetectZeStack.",
+  "repository": {
+    "url": "https://github.com/mlugo-apx/detectzestack-mcp",
+    "source": "github"
+  },
+  "version": "1.1.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "detectzestack-mcp",
+      "version": "1.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "DETECTZESTACK_API_KEY",
+          "description": "Direct API key from https://detectzestack.com/signup (free: 100 requests/month). Set this OR one of the others.",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "RAPIDAPI_KEY",
+          "description": "RapidAPI key from https://rapidapi.com/mlugoapx/api/detectzestack (alternative).",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "APIMARKET_KEY",
+          "description": "API.market key (alternative).",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

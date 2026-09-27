@@ -24,3 +24,18 @@ jobs:
       - name: tag matches package.json version
         run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
       - run: npm publish --provenance --access public
+      # --- MCP Registry (GitHub OIDC login, no secrets) ---
+      - name: wait for npm to serve this version (registry verifies mcpName on npm)
+        run: |
+          V=$(node -p "require('./package.json').version")
+          for i in $(seq 1 30); do
+            npm view "detectzestack-mcp@$V" mcpName 2>/dev/null | grep -q "io.github.mlugo-apx/detectzestack-mcp" && exit 0
+            sleep 10
+          done
+          echo "npm never served detectzestack-mcp@$V with mcpName"; exit 1
+      - name: install mcp-publisher
+        run: curl -sL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+      - name: login to MCP Registry (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+      - name: publish server.json to MCP Registry
+        run: ./mcp-publisher publish
